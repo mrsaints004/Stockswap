@@ -8,6 +8,11 @@ let cachedError: string | null = null;
 let cachedLoading = true;
 let listeners: Array<() => void> = [];
 
+// Stable references for server snapshots — must never change identity
+const SERVER_STOCKS: PreStock[] = [];
+const SERVER_LOADING = true;
+const SERVER_ERROR: string | null = null;
+
 function emitChange() {
   for (const listener of listeners) {
     listener();
@@ -55,17 +60,17 @@ export function usePreStocks() {
   const stocks = useSyncExternalStore(
     subscribe,
     () => cachedStocks,
-    () => [] as PreStock[]
+    () => SERVER_STOCKS
   );
   const loading = useSyncExternalStore(
     subscribe,
     () => cachedLoading,
-    () => true
+    () => SERVER_LOADING
   );
   const error = useSyncExternalStore(
     subscribe,
     () => cachedError,
-    () => null as string | null
+    () => SERVER_ERROR
   );
 
   return { stocks, loading, error, refetch: fetchStocksData };

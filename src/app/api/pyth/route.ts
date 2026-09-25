@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 
+const HERMES_BASE =
+  process.env.PYTH_HERMES_URL || "https://pyth.dourolabs.app/hermes";
+
 // Pyth price feed IDs — verified from hermes.pyth.network/v2/price_feeds
 // Shows equity (market hours) vs xStock (24/7 crypto) feeds for arbitrage surface
 const PYTH_FEED_IDS: Record<
@@ -66,14 +69,20 @@ export async function GET() {
     }
 
     const params = allFeedIds.map((id) => `ids[]=${id}`).join("&");
+    const headers: Record<string, string> = {};
+    if (process.env.PYTH_API_KEY) {
+      headers["Authorization"] = `Bearer ${process.env.PYTH_API_KEY}`;
+    }
+
     const res = await fetch(
-      `https://hermes.pyth.network/v2/updates/price/latest?${params}`,
-      { next: { revalidate: 10 } }
+      `${HERMES_BASE}/v2/updates/price/latest?${params}`,
+      { headers, next: { revalidate: 10 } }
     );
 
     if (!res.ok) {
+      const text = await res.text();
       return NextResponse.json(
-        { error: "Failed to fetch Pyth data" },
+        { error: `Pyth API error: ${res.status} ${text}` },
         { status: res.status }
       );
     }

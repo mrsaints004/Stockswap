@@ -13,6 +13,11 @@ let cachedError: string | null = null;
 let cachedLoading = true;
 let listeners: Array<() => void> = [];
 
+// Stable references for server snapshots
+const SERVER_DATA: PythData | null = null;
+const SERVER_LOADING = true;
+const SERVER_ERROR: string | null = null;
+
 function emitChange() {
   for (const listener of listeners) {
     listener();
@@ -60,17 +65,17 @@ export function usePythPrices() {
   const data = useSyncExternalStore(
     subscribe,
     () => cachedData,
-    () => null as PythData | null
+    () => SERVER_DATA
   );
   const loading = useSyncExternalStore(
     subscribe,
     () => cachedLoading,
-    () => true
+    () => SERVER_LOADING
   );
   const error = useSyncExternalStore(
     subscribe,
     () => cachedError,
-    () => null as string | null
+    () => SERVER_ERROR
   );
 
   const getPriceForFeedId = useCallback(

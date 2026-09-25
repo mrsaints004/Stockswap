@@ -28,16 +28,13 @@ export function Header() {
         </div>
 
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-muted-foreground">
-          <a href="#markets" className="hover:text-foreground transition-colors">
+          <a href="#markets" className="hover:text-foreground transition-colors scroll-smooth">
             Markets
           </a>
-          <a href="#swap" className="hover:text-foreground transition-colors">
+          <a href="#swap" className="hover:text-foreground transition-colors scroll-smooth">
             Swap
           </a>
-          <a href="#pools" className="hover:text-foreground transition-colors">
-            Pools
-          </a>
-          <a href="#prices" className="hover:text-foreground transition-colors">
+          <a href="#prices" className="hover:text-foreground transition-colors scroll-smooth">
             Price Feeds
           </a>
         </nav>

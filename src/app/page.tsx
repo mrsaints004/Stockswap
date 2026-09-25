@@ -36,35 +36,37 @@ export default function Home() {
         </section>
 
         {/* Main content grid */}
-        <section id="markets" className="grid gap-6 lg:grid-cols-[1fr_380px]">
+        <section id="markets" className="scroll-mt-20 grid gap-6 lg:grid-cols-[1fr_380px]">
           {/* Left: Markets table */}
           <div className="space-y-6">
             <TokenList onSelectToken={setSelectedToken} />
 
             {/* Pyth Price Feeds */}
-            <div id="prices">
+            <div id="prices" className="scroll-mt-20">
               <PriceFeeds />
             </div>
           </div>
 
           {/* Right: Swap + Pool sidebar */}
-          <div className="space-y-6" id="swap">
-            <Tabs defaultValue="swap">
-              <TabsList className="w-full">
-                <TabsTrigger value="swap" className="flex-1">
-                  Swap
-                </TabsTrigger>
-                <TabsTrigger value="pool" className="flex-1" id="pools">
-                  Create Pool
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="swap" className="mt-3">
-                <SwapPanel selectedToken={selectedToken} />
-              </TabsContent>
-              <TabsContent value="pool" className="mt-3">
-                <PoolCreator selectedToken={selectedToken} />
-              </TabsContent>
-            </Tabs>
+          <div className="space-y-6 scroll-mt-20" id="swap">
+            <div className="lg:sticky lg:top-20">
+              <Tabs defaultValue="swap">
+                <TabsList className="w-full">
+                  <TabsTrigger value="swap" className="flex-1">
+                    Swap
+                  </TabsTrigger>
+                  <TabsTrigger value="pool" className="flex-1">
+                    Create Pool
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="swap" className="mt-3">
+                  <SwapPanel selectedToken={selectedToken} />
+                </TabsContent>
+                <TabsContent value="pool" className="mt-3">
+                  <PoolCreator selectedToken={selectedToken} />
+                </TabsContent>
+              </Tabs>
+            </div>
           </div>
         </section>
 
