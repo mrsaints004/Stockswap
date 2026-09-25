@@ -59,13 +59,20 @@ export function PriceFeeds() {
               </a>
             </p>
           </div>
-          <Badge
-            variant="outline"
-            className="gap-1.5 border-purple-500/30 text-purple-500"
-          >
-            <span className="h-1.5 w-1.5 rounded-full bg-purple-500 animate-pulse" />
-            Live
-          </Badge>
+          <div className="flex items-center gap-2">
+            {data?.partial && (
+              <Badge variant="outline" className="text-xs text-yellow-500 border-yellow-500/30">
+                Partial
+              </Badge>
+            )}
+            <Badge
+              variant="outline"
+              className="gap-1.5 border-purple-500/30 text-purple-500"
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-purple-500 animate-pulse" />
+              Live
+            </Badge>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="p-0">

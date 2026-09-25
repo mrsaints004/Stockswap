@@ -6,6 +6,7 @@ import type { PythPriceFeed } from "@/lib/types";
 interface PythData {
   feeds: PythPriceFeed[];
   feedMap: Record<string, { name: string; equity?: string; xstock?: string }>;
+  partial?: boolean;
 }
 
 let cachedData: PythData | null = null;

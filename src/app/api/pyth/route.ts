@@ -68,29 +68,52 @@ export async function GET() {
       if (feeds.xstock) allFeedIds.push(feeds.xstock);
     }
 
-    const params = allFeedIds.map((id) => `ids[]=${id}`).join("&");
     const headers: Record<string, string> = {};
     if (process.env.PYTH_API_KEY) {
       headers["Authorization"] = `Bearer ${process.env.PYTH_API_KEY}`;
     }
 
+    // Try fetching all feeds at once first
+    const params = allFeedIds.map((id) => `ids[]=${id}`).join("&");
     const res = await fetch(
       `${HERMES_BASE}/v2/updates/price/latest?${params}`,
       { headers, next: { revalidate: 10 } }
     );
 
-    if (!res.ok) {
-      const text = await res.text();
-      return NextResponse.json(
-        { error: `Pyth API error: ${res.status} ${text}` },
-        { status: res.status }
-      );
+    if (res.ok) {
+      const data = await res.json();
+      return NextResponse.json({
+        feeds: data.parsed || [],
+        feedMap: PYTH_FEED_IDS,
+      });
     }
 
-    const data = await res.json();
+    // If bulk request fails (403 = some feeds not entitled), fetch individually
+    // and collect whatever we can access
+    const accessibleFeeds: unknown[] = [];
+
+    const results = await Promise.allSettled(
+      allFeedIds.map(async (id) => {
+        const r = await fetch(
+          `${HERMES_BASE}/v2/updates/price/latest?ids[]=${id}`,
+          { headers, next: { revalidate: 10 } }
+        );
+        if (!r.ok) return null;
+        const d = await r.json();
+        return d.parsed?.[0] ?? null;
+      })
+    );
+
+    for (const result of results) {
+      if (result.status === "fulfilled" && result.value) {
+        accessibleFeeds.push(result.value);
+      }
+    }
+
     return NextResponse.json({
-      feeds: data.parsed || [],
+      feeds: accessibleFeeds,
       feedMap: PYTH_FEED_IDS,
+      partial: accessibleFeeds.length < allFeedIds.length,
     });
   } catch {
     return NextResponse.json(
