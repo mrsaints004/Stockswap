@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 
 const HERMES_URL = "https://hermes.pyth.network";
+const PYTH_API_KEY = process.env.NEXT_PUBLIC_PYTH_API_KEY || "";
 
 export interface PythPriceEntry {
   feedId: string;
@@ -12,8 +13,7 @@ export interface PythPriceEntry {
   publishTime: number;
 }
 
-// Verified Pyth feed IDs from https://www.pyth.network/developers/price-feed-ids#solana-mainnet
-// Only include feeds we've confirmed exist — no search API calls needed.
+// Verified Pyth feed IDs from https://www.pyth.network/developers/price-feed-ids
 const VERIFIED_FEEDS: Record<string, string> = {
   AAPL: "49f6b65cb1de6b10eaf75e7c03ca029c306d0357e91b5311b175084a5ad55688",
   TSLA: "16dad506d7db8da01c87581c87ca897a012a153557d4d578c3b9c9e1bc0632f1",
@@ -21,7 +21,6 @@ const VERIFIED_FEEDS: Record<string, string> = {
   MSFT: "d0ca23c1cc005e004ccf1db5bf76aeb6a49218f43dac3d4b275e92de12ded4d1",
   GOOGL: "e65ff435be42630439c96a7b6c0733e4cde940e4cba58e4aa4ca4f2ef461b7ad",
   META: "907d0bfe8c03c16a6e2e03de5f4780806acef7e2e2c1325de1e1340e81cb80d7",
-  NFLX: "8f60a3a8ca5e7f3ca1693cf7bce0b0f7ec8e1c3b5c2d4e6f8a0b2c4d6e8f0a1",
 };
 
 export function usePythPrices(symbols: string[]) {
@@ -37,7 +36,7 @@ export function usePythPrices(symbols: string[]) {
       return;
     }
 
-    // Match symbols to known feed IDs — zero API search calls
+    // Match symbols to known feed IDs
     const matchedFeeds = new Map<string, string>();
     for (const sym of symbols) {
       const upper = sym.toUpperCase();
@@ -55,7 +54,6 @@ export function usePythPrices(symbols: string[]) {
     let cancelled = false;
     const feedIds = Array.from(matchedFeeds.values());
 
-    // Reverse map for lookup
     const feedToSymbol = new Map<string, string>();
     for (const [sym, fid] of matchedFeeds) {
       feedToSymbol.set(fid, sym);
@@ -63,17 +61,18 @@ export function usePythPrices(symbols: string[]) {
 
     async function fetchPrices() {
       try {
-        // Single HTTP GET — no SDK, no retry storm
         const idsParam = feedIds.map((id) => `ids[]=${id}`).join("&");
+        const headers: Record<string, string> = {};
+        if (PYTH_API_KEY) {
+          headers["Authorization"] = `Bearer ${PYTH_API_KEY}`;
+        }
+
         const res = await fetch(
           `${HERMES_URL}/v2/updates/price/latest?${idsParam}`,
-          { signal: AbortSignal.timeout(5000) }
+          { signal: AbortSignal.timeout(5000), headers }
         );
 
-        if (!res.ok) {
-          // Don't retry on rate limit — just wait for next interval
-          return;
-        }
+        if (!res.ok) return;
 
         const json = await res.json();
         if (cancelled || !json?.parsed) return;
