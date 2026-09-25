@@ -4,14 +4,6 @@ import { useState, useCallback } from "react";
 import Image from "next/image";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
-import { PublicKey, Transaction, SystemProgram } from "@solana/web3.js";
-import {
-  getAssociatedTokenAddress,
-  createAssociatedTokenAccountInstruction,
-  TOKEN_PROGRAM_ID,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  createApproveInstruction,
-} from "@solana/spl-token";
 import { usePreStocks } from "@/hooks/use-prestocks";
 import { useTokenBalances } from "@/hooks/use-token-balances";
 import { formatPrice } from "@/lib/format";
@@ -34,10 +26,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import type { PreStock } from "@/lib/types";
-
-const DCA_PROGRAM_ID = new PublicKey(
-  "DCA265Vj8a9CEuX1eb1LWRnDT7uK6q1xMipnNyatn23M"
-);
 
 const FREQUENCY_OPTIONS = [
   { label: "Every minute", value: 60, description: "Test frequency" },
@@ -87,33 +75,7 @@ export function DCAPanel() {
     setError(null);
 
     try {
-      const usdcMint = new PublicKey(USDC_MINT);
-      const outputMint = new PublicKey(token.contract_address);
-
-      // Get or create the user's USDC ATA
-      const userUsdcAta = await getAssociatedTokenAddress(
-        usdcMint,
-        publicKey
-      );
-
-      // Create DCA account (PDA)
-      const dcaSeed = Buffer.from("dca");
-      const [dcaAccount] = PublicKey.findProgramAddressSync(
-        [
-          dcaSeed,
-          publicKey.toBuffer(),
-          usdcMint.toBuffer(),
-          outputMint.toBuffer(),
-          Buffer.from(new Uint8Array(new BigInt64Array([BigInt(Date.now())]).buffer)),
-        ],
-        DCA_PROGRAM_ID
-      );
-
-      // For now, we'll create a simulated DCA by doing the first buy
-      // and scheduling info display. Full Jupiter DCA integration requires
-      // their SDK which uses specific instruction layouts.
-      // We'll use Jupiter's quote API for immediate execution of first order.
-
+      // Execute first DCA order immediately via Jupiter swap
       const {
         getQuote: getQ,
         getSwapTransaction: getSwapTx,
@@ -136,7 +98,7 @@ export function DCAPanel() {
         localStorage.getItem("stockswap_dca_orders") || "[]"
       );
       dcaOrders.push({
-        id: dcaAccount.toBase58(),
+        id: `dca-${Date.now()}`,
         inputMint: USDC_MINT,
         outputMint: token.contract_address,
         outputSymbol: token.symbol,

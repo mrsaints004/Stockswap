@@ -19,6 +19,7 @@ export interface TokenBalance {
 let lastFetchTime = 0;
 let cachedResult: Map<string, TokenBalance> = new Map();
 let fetchPromise: Promise<Map<string, TokenBalance>> | null = null;
+let forceNextFetch = false;
 
 const MIN_FETCH_INTERVAL = 15000; // 15 seconds minimum between fetches
 
@@ -43,11 +44,12 @@ export function useTokenBalances(mints: string[]) {
 
     const now = Date.now();
 
-    // If another component just fetched, reuse the cached result
-    if (now - lastFetchTime < MIN_FETCH_INTERVAL && cachedResult.size > 0) {
+    // If another component just fetched, reuse the cached result (unless forced)
+    if (!forceNextFetch && now - lastFetchTime < MIN_FETCH_INTERVAL && cachedResult.size > 0) {
       setBalances(cachedResult);
       return;
     }
+    forceNextFetch = false;
 
     // If a fetch is already in progress, wait for it
     if (fetchPromise) {
@@ -133,5 +135,10 @@ export function useTokenBalances(mints: string[]) {
     };
   }, [walletKey, connected, fetchBalances]);
 
-  return { balances, loading, refetch: fetchBalances };
+  const forceRefetch = useCallback(() => {
+    forceNextFetch = true;
+    fetchBalances();
+  }, [fetchBalances]);
+
+  return { balances, loading, refetch: forceRefetch };
 }
