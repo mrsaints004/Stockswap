@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "StockSwap — Pre-IPO Stock Trading on Solana",
   description:
-    "Discover, trade, and provide liquidity for tokenized pre-IPO stocks on Solana. Build index baskets, DCA into pre-IPO stocks, and track your portfolio. Powered by PreStocks, Meteora DBC, Jupiter, and Pyth.",
+    "Discover, trade, and provide liquidity for tokenized pre-IPO stocks on Solana. Build index baskets, DCA into pre-IPO stocks, and track your portfolio. Powered by PreStocks, Meteora DBC, and Jupiter.",
   keywords: [
     "Solana",
     "pre-IPO",
@@ -27,7 +27,6 @@ export const metadata: Metadata = {
     "PreStocks",
     "Meteora",
     "Jupiter",
-    "Pyth",
     "StockSwap",
     "index basket",
     "DCA",

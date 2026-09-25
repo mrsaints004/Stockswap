@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { usePreStocks } from "@/hooks/use-prestocks";
-import { usePythPrices } from "@/hooks/use-pyth-prices";
 import { formatPrice, formatValuation, formatSupply } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,7 +20,6 @@ import {
   Search,
   ExternalLink,
   ArrowUpDown,
-  Radio,
 } from "lucide-react";
 import type { PreStock } from "@/lib/types";
 
@@ -37,10 +35,6 @@ export function TokenList({
   const [search, setSearch] = useState("");
   const [sortField, setSortField] = useState<SortField>("impliedValuation");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
-
-  // Get Pyth price feeds for all symbols
-  const symbols = useMemo(() => stocks.map((s) => s.symbol), [stocks]);
-  const { prices: pythPrices, loading: pythLoading } = usePythPrices(symbols);
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
@@ -89,12 +83,6 @@ export function TokenList({
               >
                 PreStocks
               </a>
-              {!pythLoading && pythPrices.size > 0 && (
-                <span className="inline-flex items-center gap-1 ml-2">
-                  <Radio className="h-3 w-3 text-emerald-500 animate-pulse" />
-                  <span className="text-emerald-500 text-xs">Pyth Live</span>
-                </span>
-              )}
             </p>
           </div>
           <div className="relative w-full sm:w-64">
@@ -130,7 +118,7 @@ export function TokenList({
                   </button>
                 </TableHead>
                 <TableHead className="text-right hidden sm:table-cell">
-                  Mark / Oracle
+                  Mark Price
                 </TableHead>
                 <TableHead className="text-right hidden md:table-cell">
                   <button
@@ -185,10 +173,6 @@ export function TokenList({
                         stock.markPrice) *
                       100;
 
-                    // Get Pyth oracle price if available
-                    const pythPrice = pythPrices.get(stock.symbol.toUpperCase());
-                    const hasPyth = !!pythPrice;
-
                     return (
                       <TableRow
                         key={stock.contract_address}
@@ -221,12 +205,6 @@ export function TokenList({
                         <TableCell className="text-right font-mono text-muted-foreground hidden sm:table-cell">
                           <div className="space-y-0.5">
                             <div>{formatPrice(stock.markPrice)}</div>
-                            {hasPyth && (
-                              <div className="flex items-center justify-end gap-1 text-emerald-500 text-[10px]">
-                                <Radio className="h-2.5 w-2.5" />
-                                {formatPrice(pythPrice.price)}
-                              </div>
-                            )}
                             <Badge
                               variant={
                                 priceDiff >= 0 ? "default" : "destructive"

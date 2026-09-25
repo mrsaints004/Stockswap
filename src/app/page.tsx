@@ -128,15 +128,6 @@ export default function Home() {
               >
                 Jupiter
               </a>
-              {" & "}
-              <a
-                href="https://pyth.network"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-emerald-500 hover:underline"
-              >
-                Pyth
-              </a>
               .
             </div>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -155,14 +146,6 @@ export default function Home() {
                 className="hover:text-foreground"
               >
                 Meteora DBC
-              </a>
-              <a
-                href="https://pyth.network"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-foreground"
-              >
-                Pyth
               </a>
             </div>
           </div>
