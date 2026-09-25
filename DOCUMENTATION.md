@@ -1,190 +1,125 @@
-# StockSwap — Technical Documentation
+# StockSwap — Documentation
 
-## Overview
+## The Problem
 
-StockSwap is a web application for trading tokenized pre-IPO stocks on the Solana blockchain. It connects to existing Solana DeFi infrastructure (Jupiter, Meteora, Pyth) to provide a unified interface for discovering, buying, selling, and managing pre-IPO stock tokens.
+Pre-IPO stock tokens exist on Solana through providers like PreStocks, but there is no unified application where users can discover these tokens, trade them, build diversified portfolios, and automate buying strategies — all in one place. Users currently have to jump between multiple tools and interfaces to do basic things like buying a pre-IPO token or tracking what they hold.
 
-The core problem: pre-IPO stock tokens exist on Solana via providers like PreStocks, but there's no single app that lets a user discover them, trade them, build portfolios around them, and set up automated strategies — all without leaving one interface.
+## What StockSwap Does
 
----
+StockSwap is a single web app that brings together everything a retail user needs to trade tokenized pre-IPO stocks on Solana. It connects to real Solana DeFi infrastructure — Jupiter for swaps, Meteora for liquidity pools, and PreStocks for token data — so users can go from discovery to trade to portfolio management without leaving the app.
 
-## Architecture
+## How It Works
 
-### Data flow
+### Architecture
+
+StockSwap is a Next.js 16 application that runs almost entirely client-side. The only server component is a thin API proxy that fetches token metadata from PreStocks (to avoid browser CORS issues). Everything else — wallet interaction, swap execution, balance tracking, pool creation — happens directly in the user's browser.
 
 ```
-PreStocks API ──> /api/prestocks (Next.js route) ──> usePreStocks hook ──> UI
-                                                                          │
-Pyth Hermes ──────────────────────> usePythPrices hook ──────────────────>│
-                                                                          │
-Solana RPC ──────────────────────> useTokenBalances hook ────────────────>│
-                                                                          │
-Jupiter API ──────────────────────> jupiter.ts (getQuote/getSwap) ──────>│
-                                                                          │
-Meteora SDK ──────────────────────> meteora.ts (createDbcPool) ─────────>│
+PreStocks API ──> /api/prestocks (Next.js proxy) ──> usePreStocks hook ──> UI
+                                                                           │
+Solana RPC ──────────────────────> useTokenBalances hook ─────────────────>│
+                                                                           │
+Jupiter API ──────────────────────> jupiter.ts (getQuote/getSwap) ────────>│
+                                                                           │
+Meteora SDK ──────────────────────> meteora.ts (createDbcPool) ──────────>│
 ```
 
-### Server-side
+### Client-side State
 
-Only one server route: `GET /api/prestocks`. This is a thin proxy to `https://prestocks.com/api/prestocks` with 30-second cache (Next.js ISR). The proxy exists to avoid CORS issues when calling PreStocks from the browser.
+No global state manager (no Redux, no Zustand). State is managed with:
 
-Everything else runs client-side. Wallet signing, Jupiter quotes, Pyth prices, Meteora pool creation — all happen in the browser.
-
-### Client-side state
-
-No global state manager (Redux, Zustand, etc.). State is managed with:
-
-- **`usePreStocks()`** — Singleton external store via `useSyncExternalStore`. Fetches stock metadata from `/api/prestocks`, polls every 30s. Shared across all components that need stock data.
-- **`usePythPrices(symbols)`** — Fetches oracle prices from Pyth Hermes REST API. Polls every 60s. Only fetches for symbols that have known Pyth feed IDs.
-- **`useTokenBalances(mints)`** — Fetches wallet token balances via `getParsedTokenAccountsByOwner`. Only polls when a wallet is connected. Polls every 30s.
-- **Component-local state** — Each panel (Swap, Basket, DCA, Pool) manages its own form state, status, errors.
+- **`usePreStocks()`** — Singleton external store via `useSyncExternalStore`. Fetches stock metadata from `/api/prestocks`, polls every 30 seconds. Shared across all components.
+- **`useTokenBalances(mints)`** — Fetches wallet token balances via `getParsedTokenAccountsByOwner` for both the legacy Token Program and Token-2022 Program. Uses module-level caching with a 15-second minimum interval to prevent RPC rate limits. Only polls when a wallet is connected.
+- **Component-local state** — Each panel (Swap, Basket, DCA, Pool) manages its own form state, status, and errors independently.
 
 ---
 
 ## Features
 
-### 1. Markets Table (`token-list.tsx`)
+### 1. Markets Table
 
-Displays all PreStocks tokens in a sortable, searchable table.
+Displays all PreStocks tokens in a sortable, searchable table. Shows token name, symbol, on-chain price, mark price, premium/discount percentage, implied valuation, and supply. Clicking a row selects that token for the Swap panel and Price Chart.
 
-**Data sources:**
-- Token metadata (name, symbol, image, price, valuation) from PreStocks API
-- Oracle prices from Pyth Network (when available)
-
-**Columns:** Token name/symbol, on-chain price, mark price + oracle price, premium/discount badge, implied valuation, supply.
-
-Clicking a row selects that token and populates it into the Swap panel and Price Chart.
-
-### 2. Swap (`swap-panel.tsx` + `jupiter.ts`)
+### 2. Swap
 
 Buy or sell stock tokens against USDC using Jupiter aggregator.
 
-**Flow:**
-1. User enters amount, selects token, chooses direction (buy/sell)
-2. After 500ms debounce, fetches a quote from Jupiter `/quote` endpoint
-3. Displays: exchange rate, price impact, route, slippage, minimum received
-4. User clicks Swap → fetches swap transaction from Jupiter `/swap` endpoint
-5. Transaction is simulated first (`simulateTransaction`) to catch errors before spending SOL
-6. User signs in wallet → transaction sent to Solana
-7. Confirmation polled, balance refreshed, toast shown
+How it works:
+1. User enters an amount, selects a token, and chooses buy or sell
+2. After a 500ms debounce, a quote is fetched from Jupiter
+3. The app displays the exchange rate, price impact, route, slippage, and minimum received
+4. User clicks Swap — a swap transaction is fetched from Jupiter
+5. The transaction is simulated first to catch errors before spending SOL
+6. User signs in their wallet and the transaction is sent to Solana
+7. Confirmation is polled, balance refreshes, and a toast notification appears
 
-**Slippage:** User-configurable (0.25%, 0.5%, 1%, 2%). Default 0.5%.
+Slippage is user-configurable (0.25%, 0.5%, 1%, 2%) with a default of 0.5%. A price impact warning appears when impact exceeds 1%.
 
-**Balance display:** Shows wallet balance for input/output tokens with MAX button.
-
-**Price impact warning:** Button turns red and shows warning when price impact > 1%.
-
-### 3. Index Basket (`basket-builder.tsx`)
+### 3. Index Basket
 
 Buy multiple stock tokens in a single session with custom allocation percentages.
 
-**Preset baskets:**
+Comes with preset baskets:
 - AI Leaders: OPENAI 40%, ANTHROPIC 35%, DATABRICKS 25%
 - Tech Giants: SPACEX 40%, STRIPE 35%, CANVA 25%
 
-Users can also build custom baskets by adding tokens and setting percentages. Total must equal 100%.
+Users can also build custom baskets by adding tokens and adjusting percentages (total must equal 100%). Swaps execute sequentially with a progress bar showing completion status. Each individual swap result is shown inline.
 
-**Execution:** Swaps are executed sequentially (not batched into one transaction — Jupiter quotes are per-pair). Progress bar shows completion. Each swap result (success/fail) is shown inline.
+### 4. Recurring Buy (DCA)
 
-### 4. Recurring Buy / DCA (`dca-panel.tsx`)
+Dollar-cost averaging: spread a purchase across multiple orders at a set frequency.
 
-Dollar-cost averaging: spread a purchase over multiple orders at a set frequency.
-
-**Configuration:**
+Configuration options:
 - Token to buy
 - Total USDC amount
-- Number of orders (min 2)
-- Frequency: every minute (testing), hourly, daily, weekly
+- Number of orders (minimum 2)
+- Frequency: every minute (for testing), hourly, daily, or weekly
 
-**Execution:** First buy is executed immediately via Jupiter swap. DCA schedule is stored in localStorage for the UI to display. The remaining orders are intended to be executed via Jupiter's on-chain DCA program.
+The first buy executes immediately via Jupiter swap. The DCA schedule is saved and displayed in the app so the user can return to execute subsequent orders on schedule.
 
-### 5. Portfolio (`portfolio.tsx`)
+### 5. Portfolio
 
 Shows the connected wallet's holdings of all PreStocks stock tokens.
 
-**Displays:**
-- Total portfolio value (stocks + USDC + SOL)
-- Per-token: balance, USD value, allocation %, premium vs. mark price
-- Link to view wallet on Solscan
+Displays total portfolio value (stocks + USDC + SOL), per-token balance, USD value, allocation percentage, and premium vs. mark price. Supports both legacy SPL tokens and Token-2022 tokens. Includes a link to view the wallet on Solscan.
 
-Only renders when a wallet is connected.
+### 6. Price Chart
 
-### 6. Price Chart (`price-chart.tsx`)
+Interactive area chart for the selected token with time ranges: 1H, 24H, 7D, 30D. Shows mark price, premium percentage, valuation, and supply below the chart.
 
-Interactive area chart for the selected token.
+### 7. DBC Pool Creator
 
-**Time ranges:** 1H, 24H, 7D, 30D
+Create Meteora Dynamic Bonding Curve liquidity pools for stock tokens paired with USDC.
 
-**Metrics below chart:** Mark price, premium %, valuation, supply.
+Three curve presets:
+- Conservative: 30 bps trade fee, $50,000 graduation threshold
+- Standard: 50 bps trade fee, $25,000 graduation threshold
+- Aggressive: 100 bps trade fee, $10,000 graduation threshold
 
-Note: Chart data is currently generated client-side using a random walk from the current price. In production, this would pull from Birdeye, DexScreener, or Jupiter's price history API.
-
-### 7. DBC Pool Creator (`pool-creator.tsx` + `meteora.ts`)
-
-Create Meteora Dynamic Bonding Curve liquidity pools for stock tokens.
-
-**Curve presets:**
-| Preset | Trade Fee | Migration Fee | Graduation |
-|--------|-----------|---------------|------------|
-| Conservative | 30 bps | 100 bps | $50,000 |
-| Standard | 50 bps | 200 bps | $25,000 |
-| Aggressive | 100 bps | 300 bps | $10,000 |
-
-**Pool config:**
-- Quote token: USDC (fixed)
-- Fee schedule: Linear decay (starts at 2x trade fee, decays to 1x over 1 hour)
-- Dynamic fee: Enabled
-- Migration: Automatic to Meteora DAMM v2 at graduation threshold
-- Liquidity: 100% permanently locked
-
-**Execution:** Creates a config account (keypair-signed) + pool-with-first-buy in two transactions.
-
-### 8. Pyth Oracle Integration (`use-pyth-prices.ts`)
-
-Fetches real-time oracle prices from Pyth Network's Hermes API.
-
-**Implementation:** Direct HTTP fetch to `hermes.pyth.network/v2/updates/price/latest` with Bearer token auth. No SDK (the HermesClient SDK has aggressive retry logic that causes 429 storms).
-
-**Feed matching:** Hard-coded map of stock symbols to verified Pyth feed IDs. Only fetches for symbols with known feeds (AAPL, TSLA, AMZN, MSFT, GOOGL, META).
-
-**Display:** Oracle prices shown in the markets table with a pulsing indicator.
+All pools use linear fee decay (starts at 2x trade fee, decays to 1x over one hour), dynamic fees enabled, and automatic migration to Meteora DAMM v2 at the graduation threshold. Liquidity is 100% permanently locked.
 
 ---
 
 ## API Integrations
 
 ### PreStocks
-
-- **Endpoint:** `https://prestocks.com/api/prestocks`
-- **Method:** GET
-- **Returns:** Array of `PreStock` objects (name, symbol, image, contract_address, markPrice, tokenPrice, impliedValuation, supply)
-- **Rate limit:** None documented
-- **Caching:** 30s server-side via Next.js ISR
+- Endpoint: `https://prestocks.com/api/prestocks`
+- Returns token metadata: name, symbol, image, contract address, mark price, token price, implied valuation, supply
+- Cached server-side for 30 seconds via Next.js ISR
 
 ### Jupiter Aggregator
-
-- **Base URL:** `https://api.jup.ag/swap/v1`
-- **Endpoints used:**
-  - `GET /quote` — Get swap quote with route plan
-  - `POST /swap` — Generate swap transaction
-- **Also:** `https://api.jup.ag/price/v2` — Token price data
-
-### Pyth Network (Hermes)
-
-- **Base URL:** `https://hermes.pyth.network`
-- **Endpoint:** `GET /v2/updates/price/latest?ids[]=<feedId>`
-- **Auth:** `Authorization: Bearer <API_KEY>`
+- Base URL: `https://api.jup.ag/swap/v1`
+- Used for swap quotes (`GET /quote`) and swap transaction generation (`POST /swap`)
+- Also uses `https://api.jup.ag/price/v2` for token price data
 
 ### Meteora
-
-- **SDK:** `@meteora-ag/dynamic-bonding-curve-sdk`
-- **Used for:** DBC pool creation with configurable curves
+- SDK: `@meteora-ag/dynamic-bonding-curve-sdk`
+- Used for creating Dynamic Bonding Curve pools with configurable parameters
 
 ### Solana RPC
-
-- **Primary:** Helius (via env var)
-- **Fallback:** `https://api.mainnet-beta.solana.com`
-- **Used for:** Transaction broadcast, balance queries, mint info, token accounts
+- Primary: Helius (configured via environment variable)
+- Fallback: `https://api.mainnet-beta.solana.com`
+- Used for transaction broadcast, balance queries, mint info, and token account lookups
 
 ---
 
@@ -192,25 +127,22 @@ Fetches real-time oracle prices from Pyth Network's Hermes API.
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `NEXT_PUBLIC_HELIUS_RPC_URL` | Recommended | Helius RPC endpoint. Falls back to public Solana RPC (rate-limited). |
-| `NEXT_PUBLIC_PYTH_API_KEY` | Optional | Pyth Hermes API key. Without it, oracle prices won't load. |
+| `NEXT_PUBLIC_HELIUS_RPC_URL` | Recommended | Helius RPC endpoint. Falls back to public Solana RPC if not set. |
 | `NEXT_PUBLIC_RPC_URL` | Optional | Alternative RPC URL. |
 
 ---
 
 ## Wallet Support
 
-Supported wallets:
-- Phantom (adapter)
-- Solflare (auto-registers via Wallet Standard)
-- Coinbase Wallet (adapter)
+Works with any Solana wallet:
+- Phantom
+- Solflare
+- Coinbase Wallet
 - Any wallet implementing the Solana Wallet Standard
-
-Auto-connect is disabled to prevent "wallet not initialized" errors on page load.
 
 ---
 
-## Build & Deploy
+## Build and Deploy
 
 ```bash
 npm run dev      # Development server on localhost:3000
@@ -224,4 +156,4 @@ Deploy to Vercel:
 npx vercel --prod
 ```
 
-Set environment variables in Vercel dashboard.
+Set environment variables in the Vercel dashboard.
