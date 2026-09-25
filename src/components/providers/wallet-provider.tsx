@@ -6,7 +6,10 @@ import {
   WalletProvider as SolanaWalletProvider,
 } from "@solana/wallet-adapter-react";
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
-import { PhantomWalletAdapter } from "@solana/wallet-adapter-wallets";
+import {
+  PhantomWalletAdapter,
+  CoinbaseWalletAdapter,
+} from "@solana/wallet-adapter-wallets";
 
 import "@solana/wallet-adapter-react-ui/styles.css";
 
@@ -16,11 +19,16 @@ const RPC_ENDPOINT =
   "https://api.mainnet-beta.solana.com";
 
 export function WalletProvider({ children }: { children: ReactNode }) {
-  const wallets = useMemo(() => [new PhantomWalletAdapter()], []);
+  // Solflare auto-registers via the Wallet Standard protocol —
+  // adding it here causes a duplicate + "not initialized" errors on load.
+  const wallets = useMemo(
+    () => [new PhantomWalletAdapter(), new CoinbaseWalletAdapter()],
+    []
+  );
 
   return (
     <ConnectionProvider endpoint={RPC_ENDPOINT}>
-      <SolanaWalletProvider wallets={wallets} autoConnect>
+      <SolanaWalletProvider wallets={wallets}>
         <WalletModalProvider>{children}</WalletModalProvider>
       </SolanaWalletProvider>
     </ConnectionProvider>

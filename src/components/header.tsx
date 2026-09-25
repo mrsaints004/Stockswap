@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import dynamic from "next/dynamic";
 import { TrendingUp } from "lucide-react";
 
@@ -11,7 +12,24 @@ const WalletMultiButton = dynamic(
   { ssr: false }
 );
 
+const NAV_LINKS = [
+  { label: "Markets", target: "markets" },
+  { label: "Trade", target: "swap" },
+  { label: "Portfolio", target: "portfolio" },
+];
+
 export function Header() {
+  const scrollTo = useCallback((e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    const headerHeight = 80; // sticky header + some breathing room
+    const top = el.getBoundingClientRect().top + window.scrollY - headerHeight;
+
+    window.scrollTo({ top, behavior: "smooth" });
+  }, []);
+
   return (
     <header className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
@@ -28,12 +46,16 @@ export function Header() {
         </div>
 
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-muted-foreground">
-          <a href="#markets" className="hover:text-foreground transition-colors">
-            Markets
-          </a>
-          <a href="#swap" className="hover:text-foreground transition-colors">
-            Swap
-          </a>
+          {NAV_LINKS.map((link) => (
+            <a
+              key={link.target}
+              href={`#${link.target}`}
+              onClick={(e) => scrollTo(e, link.target)}
+              className="hover:text-foreground transition-colors"
+            >
+              {link.label}
+            </a>
+          ))}
         </nav>
 
         <WalletMultiButton

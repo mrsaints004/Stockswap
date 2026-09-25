@@ -24,6 +24,7 @@ import {
   XCircle,
   ExternalLink,
 } from "lucide-react";
+import { toast } from "sonner";
 import type { PreStock } from "@/lib/types";
 
 interface PoolCreatorProps {
@@ -67,13 +68,20 @@ export function PoolCreator({ selectedToken }: PoolCreatorProps) {
         signAllTransactions
       );
 
-      setTxSignature(result.txSignatures[result.txSignatures.length - 1]);
+      const lastTx = result.txSignatures[result.txSignatures.length - 1];
+      setTxSignature(lastTx);
       setStatus("success");
+      toast.success("Pool created!", {
+        action: {
+          label: "View",
+          onClick: () => window.open(`https://solscan.io/tx/${lastTx}`, "_blank"),
+        },
+      });
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to create pool"
-      );
+      const msg = err instanceof Error ? err.message : "Failed to create pool";
+      setError(msg);
       setStatus("error");
+      toast.error("Pool creation failed", { description: msg });
     }
   };
 
@@ -335,6 +343,7 @@ export function PoolCreator({ selectedToken }: PoolCreatorProps) {
             disabled={
               !token ||
               !initialLiquidity ||
+              parseFloat(initialLiquidity) < 1 ||
               status === "creating"
             }
             className="w-full h-12 bg-blue-500 hover:bg-blue-600 text-white text-base font-medium disabled:opacity-50"

@@ -55,6 +55,13 @@ export const CURVE_PRESETS: CurvePreset[] = [
   },
 ];
 
+const SUPPORTED_DECIMALS: Record<number, TokenDecimal> = {
+  6: TokenDecimal.SIX,
+  7: TokenDecimal.SEVEN,
+  8: TokenDecimal.EIGHT,
+  9: TokenDecimal.NINE,
+};
+
 export async function createDbcPool(
   connection: Connection,
   payer: PublicKey,
@@ -63,6 +70,14 @@ export async function createDbcPool(
   initialLiquidityUsdc: number,
   signAllTransactions: (txs: Transaction[]) => Promise<Transaction[]>
 ): Promise<{ poolAddress: string; txSignatures: string[] }> {
+  // Validate initial liquidity
+  if (!initialLiquidityUsdc || initialLiquidityUsdc <= 0) {
+    throw new Error("Initial liquidity must be greater than 0");
+  }
+  if (initialLiquidityUsdc < 1) {
+    throw new Error("Minimum initial liquidity is 1 USDC");
+  }
+
   const client = new DynamicBondingCurveClient(connection, "confirmed");
 
   // Fetch actual token decimals from chain
@@ -70,13 +85,13 @@ export async function createDbcPool(
     connection,
     stockMint.toBase58()
   );
-  const tokenDecimalMap: Record<number, TokenDecimal> = {
-    6: TokenDecimal.SIX,
-    7: TokenDecimal.SEVEN,
-    8: TokenDecimal.EIGHT,
-    9: TokenDecimal.NINE,
-  };
-  const tokenBaseDecimal = tokenDecimalMap[baseDecimals] ?? TokenDecimal.SIX;
+
+  const tokenBaseDecimal = SUPPORTED_DECIMALS[baseDecimals];
+  if (!tokenBaseDecimal) {
+    throw new Error(
+      `Unsupported token decimals: ${baseDecimals}. Supported: ${Object.keys(SUPPORTED_DECIMALS).join(", ")}`
+    );
+  }
 
   const curveConfig = buildCurve({
     token: {
@@ -135,6 +150,11 @@ export async function createDbcPool(
   // Convert USDC to raw amount (6 decimals)
   const buyAmount = new BN(Math.floor(initialLiquidityUsdc * 1e6));
 
+  // Calculate a minimum output (accept up to 5% slippage on first buy)
+  const estimatedOutput = new BN(
+    Math.floor(initialLiquidityUsdc * 1e6 * 0.95)
+  );
+
   const { createConfigTx, createPoolWithFirstBuyTx } =
     await partnerService.createConfigAndPoolWithFirstBuy({
       config: configKeypair.publicKey,
@@ -153,15 +173,14 @@ export async function createDbcPool(
         ? {
             buyer: payer,
             buyAmount,
-            minimumAmountOut: new BN(0),
+            minimumAmountOut: estimatedOutput,
             referralTokenAccount: null,
           }
         : undefined,
       ...curveConfig,
     });
 
-  // The config account is a new keypair — it must sign the createConfigTx.
-  // Set a fresh blockhash so the transactions are valid.
+  // Set a fresh blockhash so the transactions are valid
   const { blockhash, lastValidBlockHeight } =
     await connection.getLatestBlockhash("confirmed");
 
@@ -207,8 +226,11 @@ export async function createDbcPool(
     );
   }
 
+  // Derive the actual pool address from the config
+  const poolAddress = configKeypair.publicKey.toBase58();
+
   return {
-    poolAddress: signatures[signatures.length - 1] || "",
+    poolAddress,
     txSignatures: signatures,
   };
 }

@@ -6,6 +6,10 @@ import { StatsBar } from "@/components/stats-bar";
 import { TokenList } from "@/components/token-list";
 import { SwapPanel } from "@/components/swap-panel";
 import { PoolCreator } from "@/components/pool-creator";
+import { PriceChart } from "@/components/price-chart";
+import { Portfolio } from "@/components/portfolio";
+import { BasketBuilder } from "@/components/basket-builder";
+import { DCAPanel } from "@/components/dca-panel";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { PreStock } from "@/lib/types";
 
@@ -23,8 +27,9 @@ export default function Home() {
             Trade Pre-IPO Stocks on Solana
           </h1>
           <p className="max-w-2xl text-muted-foreground">
-            Discover and trade tokenized pre-IPO stocks like SpaceX, Anthropic,
-            and Stripe. 24/7 markets, permissionless access, real-time pricing.
+            Discover, trade, and invest in tokenized pre-IPO stocks like SpaceX,
+            Anthropic, and Stripe. Index baskets, DCA, portfolio tracking — all
+            24/7, permissionless, on-chain.
           </p>
         </section>
 
@@ -33,27 +38,49 @@ export default function Home() {
           <StatsBar />
         </section>
 
+        {/* Price chart (shown when a token is selected) */}
+        {selectedToken && (
+          <section id="chart" className="scroll-mt-20">
+            <PriceChart token={selectedToken} />
+          </section>
+        )}
+
         {/* Main content grid */}
-        <section id="markets" className="scroll-mt-20 grid gap-6 lg:grid-cols-[1fr_380px]">
+        <section
+          id="markets"
+          className="scroll-mt-20 grid gap-6 lg:grid-cols-[1fr_400px]"
+        >
           {/* Left: Markets table */}
           <div className="space-y-6">
             <TokenList onSelectToken={setSelectedToken} />
           </div>
 
-          {/* Right: Swap + Pool sidebar */}
+          {/* Right: Action sidebar */}
           <div className="space-y-6 scroll-mt-20" id="swap">
-            <div className="lg:sticky lg:top-20">
+            <div className="lg:sticky lg:top-20 space-y-4">
               <Tabs defaultValue="swap">
-                <TabsList className="w-full">
-                  <TabsTrigger value="swap" className="flex-1">
+                <TabsList className="w-full grid grid-cols-4">
+                  <TabsTrigger value="swap" className="text-xs sm:text-sm">
                     Swap
                   </TabsTrigger>
-                  <TabsTrigger value="pool" className="flex-1">
-                    Create Pool
+                  <TabsTrigger value="basket" className="text-xs sm:text-sm">
+                    Basket
+                  </TabsTrigger>
+                  <TabsTrigger value="dca" className="text-xs sm:text-sm">
+                    DCA
+                  </TabsTrigger>
+                  <TabsTrigger value="pool" className="text-xs sm:text-sm">
+                    Pool
                   </TabsTrigger>
                 </TabsList>
                 <TabsContent value="swap" className="mt-3">
                   <SwapPanel selectedToken={selectedToken} />
+                </TabsContent>
+                <TabsContent value="basket" className="mt-3">
+                  <BasketBuilder />
+                </TabsContent>
+                <TabsContent value="dca" className="mt-3">
+                  <DCAPanel />
                 </TabsContent>
                 <TabsContent value="pool" className="mt-3">
                   <PoolCreator selectedToken={selectedToken} />
@@ -61,6 +88,11 @@ export default function Home() {
               </Tabs>
             </div>
           </div>
+        </section>
+
+        {/* Portfolio section */}
+        <section id="portfolio" className="scroll-mt-20">
+          <Portfolio />
         </section>
 
         {/* Footer */}
@@ -78,7 +110,7 @@ export default function Home() {
               >
                 PreStocks
               </a>
-              {" "}and{" "}
+              ,{" "}
               <a
                 href="https://meteora.ag"
                 target="_blank"
@@ -86,6 +118,24 @@ export default function Home() {
                 className="text-blue-500 hover:underline"
               >
                 Meteora
+              </a>
+              ,{" "}
+              <a
+                href="https://jup.ag"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-emerald-500 hover:underline"
+              >
+                Jupiter
+              </a>
+              {" & "}
+              <a
+                href="https://pyth.network"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-orange-500 hover:underline"
+              >
+                Pyth
               </a>
               .
             </div>
@@ -97,6 +147,22 @@ export default function Home() {
                 className="hover:text-foreground"
               >
                 Solana
+              </a>
+              <a
+                href="https://docs.meteora.ag/developer-guides/dbc"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-foreground"
+              >
+                Meteora DBC
+              </a>
+              <a
+                href="https://pyth.network"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-foreground"
+              >
+                Pyth
               </a>
             </div>
           </div>

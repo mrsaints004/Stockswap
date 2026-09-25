@@ -1,12 +1,13 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useSyncExternalStore, useCallback } from "react";
 import type { PreStock } from "@/lib/types";
 
 let cachedStocks: PreStock[] = [];
 let cachedError: string | null = null;
 let cachedLoading = true;
 let listeners: Array<() => void> = [];
+let pollTimer: ReturnType<typeof setInterval> | null = null;
 
 // Stable references for server snapshots — must never change identity
 const SERVER_STOCKS: PreStock[] = [];
@@ -21,8 +22,21 @@ function emitChange() {
 
 function subscribe(listener: () => void) {
   listeners = [...listeners, listener];
+
+  // Start polling when first listener subscribes
+  if (listeners.length === 1 && !pollTimer) {
+    fetchStocksData();
+    pollTimer = setInterval(fetchStocksData, 30000);
+  }
+
   return () => {
     listeners = listeners.filter((l) => l !== listener);
+
+    // Stop polling when no listeners remain
+    if (listeners.length === 0 && pollTimer) {
+      clearInterval(pollTimer);
+      pollTimer = null;
+    }
   };
 }
 
@@ -36,27 +50,15 @@ async function fetchStocksData() {
     cachedStocks = data;
     cachedError = null;
   } catch (err) {
-    cachedError = err instanceof Error ? err.message : "Failed to fetch stocks";
+    cachedError =
+      err instanceof Error ? err.message : "Failed to fetch stocks";
   } finally {
     cachedLoading = false;
     emitChange();
   }
 }
 
-// Initial fetch + polling
-let initialized = false;
-function ensureInitialized() {
-  if (initialized) return;
-  initialized = true;
-  if (typeof window !== "undefined") {
-    fetchStocksData();
-    setInterval(fetchStocksData, 30000);
-  }
-}
-
 export function usePreStocks() {
-  ensureInitialized();
-
   const stocks = useSyncExternalStore(
     subscribe,
     () => cachedStocks,
@@ -73,5 +75,9 @@ export function usePreStocks() {
     () => SERVER_ERROR
   );
 
-  return { stocks, loading, error, refetch: fetchStocksData };
+  const refetch = useCallback(() => {
+    fetchStocksData();
+  }, []);
+
+  return { stocks, loading, error, refetch };
 }
