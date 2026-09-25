@@ -355,9 +355,9 @@ export function DCAPanel() {
         <div className="flex items-start gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3">
           <Info className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
           <p className="text-xs text-muted-foreground">
-            DCA executes the first buy immediately. Subsequent orders are
-            scheduled on-chain via Jupiter&apos;s DCA program for hands-free
-            investing.
+            The first buy executes immediately via Jupiter. Your DCA schedule
+            is saved and displayed below. Return to execute each subsequent
+            order on schedule.
           </p>
         </div>
 
