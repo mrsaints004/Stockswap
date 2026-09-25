@@ -1,9 +1,27 @@
-import { Connection, VersionedTransaction } from "@solana/web3.js";
+import { Connection, PublicKey, VersionedTransaction } from "@solana/web3.js";
 
 const JUPITER_API = "https://api.jup.ag/swap/v1";
 
 // USDC mint on mainnet
 export const USDC_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+
+const decimalsCache = new Map<string, number>();
+
+export async function getMintDecimals(
+  connection: Connection,
+  mint: string
+): Promise<number> {
+  if (mint === USDC_MINT) return 6;
+  const cached = decimalsCache.get(mint);
+  if (cached !== undefined) return cached;
+
+  const info = await connection.getParsedAccountInfo(new PublicKey(mint));
+  const data = info.value?.data;
+  const decimals =
+    data && "parsed" in data ? data.parsed.info.decimals : 6;
+  decimalsCache.set(mint, decimals);
+  return decimals;
+}
 
 export interface JupiterQuote {
   inputMint: string;

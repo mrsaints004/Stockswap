@@ -5,6 +5,7 @@ import {
   type VersionedTransaction,
   type Transaction,
 } from "@solana/web3.js";
+import { getMintDecimals } from "./jupiter";
 import {
   DynamicBondingCurveClient,
   buildCurve,
@@ -67,10 +68,23 @@ export async function createDbcPool(
 ): Promise<{ poolAddress: string; txSignatures: string[] }> {
   const client = new DynamicBondingCurveClient(connection, "confirmed");
 
+  // Fetch actual token decimals from chain
+  const baseDecimals = await getMintDecimals(
+    connection,
+    stockMint.toBase58()
+  );
+  const tokenDecimalMap: Record<number, TokenDecimal> = {
+    6: TokenDecimal.SIX,
+    7: TokenDecimal.SEVEN,
+    8: TokenDecimal.EIGHT,
+    9: TokenDecimal.NINE,
+  };
+  const tokenBaseDecimal = tokenDecimalMap[baseDecimals] ?? TokenDecimal.SIX;
+
   const curveConfig = buildCurve({
     token: {
       tokenType: TokenType.SPLToken,
-      tokenBaseDecimal: TokenDecimal.SIX,
+      tokenBaseDecimal,
       tokenQuoteDecimal: TokenDecimal.SIX,
       tokenAuthorityOption: TokenAuthorityOption.Immutable,
       totalTokenSupply: 1_000_000_000,

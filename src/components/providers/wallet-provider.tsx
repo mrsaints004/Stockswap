@@ -11,7 +11,9 @@ import { PhantomWalletAdapter } from "@solana/wallet-adapter-wallets";
 import "@solana/wallet-adapter-react-ui/styles.css";
 
 const RPC_ENDPOINT =
-  process.env.NEXT_PUBLIC_RPC_URL || "https://api.mainnet-beta.solana.com";
+  process.env.NEXT_PUBLIC_HELIUS_RPC_URL ||
+  process.env.NEXT_PUBLIC_RPC_URL ||
+  "https://api.mainnet-beta.solana.com";
 
 export function WalletProvider({ children }: { children: ReactNode }) {
   const wallets = useMemo(() => [new PhantomWalletAdapter()], []);

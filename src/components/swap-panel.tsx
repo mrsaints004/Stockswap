@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import Image from "next/image";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useConnection } from "@solana/wallet-adapter-react";
@@ -11,6 +11,7 @@ import {
   getQuote,
   getSwapTransaction,
   executeSwap,
+  getMintDecimals,
   USDC_MINT,
   type JupiterQuote,
 } from "@/lib/jupiter";
@@ -81,7 +82,7 @@ export function SwapPanel({ selectedToken }: SwapPanelProps) {
           const outputMint =
             dir === "buy" ? token.contract_address : USDC_MINT;
 
-          const decimals = 6;
+          const decimals = await getMintDecimals(connection, inputMint);
           const rawAmount = Math.floor(
             parseFloat(amount) * Math.pow(10, decimals)
           );
@@ -98,7 +99,7 @@ export function SwapPanel({ selectedToken }: SwapPanelProps) {
         }
       }, 500);
     },
-    []
+    [connection]
   );
 
   const handleAmountChange = useCallback(
@@ -109,8 +110,27 @@ export function SwapPanel({ selectedToken }: SwapPanelProps) {
     [toToken, direction, fetchQuote]
   );
 
+  const [outDecimals, setOutDecimals] = useState(6);
+
+  // Fetch output mint decimals when output mint changes
+  const outputMint =
+    quote?.outputMint ??
+    (toToken
+      ? direction === "buy"
+        ? toToken.contract_address
+        : USDC_MINT
+      : null);
+
+  useEffect(() => {
+    if (outputMint) {
+      getMintDecimals(connection, outputMint).then(setOutDecimals);
+    }
+  }, [outputMint, connection]);
+
   const toAmount = quote
-    ? (parseInt(quote.outAmount) / 1e6).toFixed(6)
+    ? (parseInt(quote.outAmount) / Math.pow(10, outDecimals)).toFixed(
+        Math.min(outDecimals, 6)
+      )
     : "";
 
   const handleSwapDirection = useCallback(() => {
