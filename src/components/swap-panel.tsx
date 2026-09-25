@@ -110,22 +110,29 @@ export function SwapPanel({ selectedToken }: SwapPanelProps) {
     [toToken, direction, fetchQuote]
   );
 
+  const [inDecimals, setInDecimals] = useState(6);
   const [outDecimals, setOutDecimals] = useState(6);
 
-  // Fetch output mint decimals when output mint changes
-  const outputMint =
-    quote?.outputMint ??
-    (toToken
-      ? direction === "buy"
-        ? toToken.contract_address
-        : USDC_MINT
-      : null);
+  // Fetch mint decimals when direction or token changes
+  const inputMintAddr = toToken
+    ? direction === "buy"
+      ? USDC_MINT
+      : toToken.contract_address
+    : null;
+  const outputMintAddr = toToken
+    ? direction === "buy"
+      ? toToken.contract_address
+      : USDC_MINT
+    : null;
 
   useEffect(() => {
-    if (outputMint) {
-      getMintDecimals(connection, outputMint).then(setOutDecimals);
+    if (inputMintAddr) {
+      getMintDecimals(connection, inputMintAddr).then(setInDecimals);
     }
-  }, [outputMint, connection]);
+    if (outputMintAddr) {
+      getMintDecimals(connection, outputMintAddr).then(setOutDecimals);
+    }
+  }, [inputMintAddr, outputMintAddr, connection]);
 
   const toAmount = quote
     ? (parseInt(quote.outAmount) / Math.pow(10, outDecimals)).toFixed(
@@ -378,10 +385,10 @@ export function SwapPanel({ selectedToken }: SwapPanelProps) {
                   1 {toToken.symbol} ={" "}
                   {formatPrice(
                     direction === "buy"
-                      ? parseFloat(quote.inAmount) /
-                          parseFloat(quote.outAmount)
-                      : parseFloat(quote.outAmount) /
-                          parseFloat(quote.inAmount)
+                      ? (parseFloat(quote.inAmount) / Math.pow(10, inDecimals)) /
+                          (parseFloat(quote.outAmount) / Math.pow(10, outDecimals))
+                      : (parseFloat(quote.outAmount) / Math.pow(10, outDecimals)) /
+                          (parseFloat(quote.inAmount) / Math.pow(10, inDecimals))
                   )}{" "}
                   USDC
                 </span>

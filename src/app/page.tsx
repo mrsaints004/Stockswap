@@ -6,7 +6,6 @@ import { StatsBar } from "@/components/stats-bar";
 import { TokenList } from "@/components/token-list";
 import { SwapPanel } from "@/components/swap-panel";
 import { PoolCreator } from "@/components/pool-creator";
-import { PriceFeeds } from "@/components/price-feeds";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { PreStock } from "@/lib/types";
 
@@ -25,8 +24,7 @@ export default function Home() {
           </h1>
           <p className="max-w-2xl text-muted-foreground">
             Discover and trade tokenized pre-IPO stocks like SpaceX, Anthropic,
-            and Stripe. 24/7 markets, permissionless access, real-time Pyth
-            price feeds.
+            and Stripe. 24/7 markets, permissionless access, real-time pricing.
           </p>
         </section>
 
@@ -40,11 +38,6 @@ export default function Home() {
           {/* Left: Markets table */}
           <div className="space-y-6">
             <TokenList onSelectToken={setSelectedToken} />
-
-            {/* Pyth Price Feeds */}
-            <div id="prices" className="scroll-mt-20">
-              <PriceFeeds />
-            </div>
           </div>
 
           {/* Right: Swap + Pool sidebar */}
@@ -85,7 +78,7 @@ export default function Home() {
               >
                 PreStocks
               </a>
-              ,{" "}
+              {" "}and{" "}
               <a
                 href="https://meteora.ag"
                 target="_blank"
@@ -93,15 +86,6 @@ export default function Home() {
                 className="text-blue-500 hover:underline"
               >
                 Meteora
-              </a>
-              , and{" "}
-              <a
-                href="https://pyth.network"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-purple-500 hover:underline"
-              >
-                Pyth Network
               </a>
               .
             </div>

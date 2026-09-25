@@ -2,7 +2,6 @@ import {
   Connection,
   Keypair,
   PublicKey,
-  type VersionedTransaction,
   type Transaction,
 } from "@solana/web3.js";
 import { getMintDecimals } from "./jupiter";
@@ -62,9 +61,7 @@ export async function createDbcPool(
   stockMint: PublicKey,
   preset: CurvePreset,
   initialLiquidityUsdc: number,
-  signAllTransactions: <T extends Transaction | VersionedTransaction>(
-    txs: T[]
-  ) => Promise<T[]>
+  signAllTransactions: (txs: Transaction[]) => Promise<Transaction[]>
 ): Promise<{ poolAddress: string; txSignatures: string[] }> {
   const client = new DynamicBondingCurveClient(connection, "confirmed");
 
@@ -163,7 +160,27 @@ export async function createDbcPool(
       ...curveConfig,
     });
 
-  const txs = [createConfigTx, createPoolWithFirstBuyTx].filter(Boolean);
+  // The config account is a new keypair — it must sign the createConfigTx.
+  // Set a fresh blockhash so the transactions are valid.
+  const { blockhash, lastValidBlockHeight } =
+    await connection.getLatestBlockhash("confirmed");
+
+  const txs: Transaction[] = [];
+
+  if (createConfigTx) {
+    createConfigTx.recentBlockhash = blockhash;
+    createConfigTx.feePayer = payer;
+    createConfigTx.partialSign(configKeypair);
+    txs.push(createConfigTx);
+  }
+
+  if (createPoolWithFirstBuyTx) {
+    createPoolWithFirstBuyTx.recentBlockhash = blockhash;
+    createPoolWithFirstBuyTx.feePayer = payer;
+    txs.push(createPoolWithFirstBuyTx);
+  }
+
+  // Wallet signs all transactions (adds payer signature)
   const signed = await signAllTransactions(txs);
   const signatures: string[] = [];
 
@@ -180,12 +197,11 @@ export async function createDbcPool(
   }
 
   if (signatures.length > 0) {
-    const latestBlockhash = await connection.getLatestBlockhash();
     await connection.confirmTransaction(
       {
         signature: signatures[signatures.length - 1],
-        blockhash: latestBlockhash.blockhash,
-        lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
+        blockhash,
+        lastValidBlockHeight,
       },
       "confirmed"
     );
