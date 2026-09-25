@@ -368,7 +368,7 @@ export function SwapPanel({ selectedToken }: SwapPanelProps) {
                 variant="outline"
                 className="shrink-0 gap-1.5 px-3 py-1.5 text-sm"
               >
-                <div className="h-5 w-5 rounded-full bg-blue-500 flex items-center justify-center text-[10px] font-bold text-white">
+                <div className="h-5 w-5 rounded-full bg-muted-foreground flex items-center justify-center text-[10px] font-bold text-white">
                   $
                 </div>
                 USDC
@@ -458,7 +458,7 @@ export function SwapPanel({ selectedToken }: SwapPanelProps) {
                 variant="outline"
                 className="shrink-0 gap-1.5 px-3 py-1.5 text-sm"
               >
-                <div className="h-5 w-5 rounded-full bg-blue-500 flex items-center justify-center text-[10px] font-bold text-white">
+                <div className="h-5 w-5 rounded-full bg-muted-foreground flex items-center justify-center text-[10px] font-bold text-white">
                   $
                 </div>
                 USDC

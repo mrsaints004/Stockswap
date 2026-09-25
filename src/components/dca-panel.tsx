@@ -185,7 +185,7 @@ export function DCAPanel() {
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-xl flex items-center gap-2">
-          <Timer className="h-5 w-5 text-violet-500" />
+          <Timer className="h-5 w-5 text-emerald-500" />
           Recurring Buy (DCA)
         </CardTitle>
         <p className="text-sm text-muted-foreground">
@@ -347,7 +347,7 @@ export function DCAPanel() {
                 onClick={() => setFrequency(opt.value)}
                 className={`rounded-xl border p-2.5 text-left transition-colors ${
                   frequency === opt.value
-                    ? "border-violet-500 bg-violet-500/5"
+                    ? "border-emerald-500 bg-emerald-500/5"
                     : "hover:bg-muted/50"
                 }`}
               >
@@ -366,7 +366,7 @@ export function DCAPanel() {
         {total > 0 && orders > 0 && (
           <div className="rounded-xl border bg-muted/20 p-3 space-y-2">
             <div className="flex items-center gap-1.5 text-sm font-medium">
-              <CalendarClock className="h-4 w-4 text-violet-500" />
+              <CalendarClock className="h-4 w-4 text-emerald-500" />
               DCA Summary
             </div>
             <div className="grid grid-cols-2 gap-2 text-sm">
@@ -390,8 +390,8 @@ export function DCAPanel() {
           </div>
         )}
 
-        <div className="flex items-start gap-2 rounded-xl border border-violet-500/20 bg-violet-500/5 p-3">
-          <Info className="h-4 w-4 text-violet-500 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3">
+          <Info className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
           <p className="text-xs text-muted-foreground">
             DCA executes the first buy immediately. Subsequent orders are
             scheduled on-chain via Jupiter&apos;s DCA program for hands-free
@@ -403,7 +403,7 @@ export function DCAPanel() {
         {!connected ? (
           <Button
             onClick={() => openWalletModal(true)}
-            className="w-full h-12 bg-violet-500 hover:bg-violet-600 text-white text-base font-medium"
+            className="w-full h-12 bg-emerald-500 hover:bg-emerald-600 text-white text-base font-medium"
           >
             <Wallet className="mr-2 h-4 w-4" />
             Connect Wallet
@@ -418,7 +418,7 @@ export function DCAPanel() {
               total > usdcBalance ||
               status === "creating"
             }
-            className="w-full h-12 bg-violet-500 hover:bg-violet-600 text-white text-base font-medium disabled:opacity-50"
+            className="w-full h-12 bg-emerald-500 hover:bg-emerald-600 text-white text-base font-medium disabled:opacity-50"
           >
             {status === "creating" ? (
               <>

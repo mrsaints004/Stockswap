@@ -37,8 +37,8 @@ export function StatsBar() {
         </div>
       </div>
       <div className="flex items-center gap-3 rounded-xl border bg-card p-4">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10">
-          <Coins className="h-5 w-5 text-blue-500" />
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10">
+          <Coins className="h-5 w-5 text-emerald-500" />
         </div>
         <div>
           <p className="text-sm text-muted-foreground">Available Tokens</p>
@@ -46,13 +46,13 @@ export function StatsBar() {
         </div>
       </div>
       <div className="flex items-center gap-3 rounded-xl border bg-card p-4">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/10">
-          <TrendingUp className="h-5 w-5 text-purple-500" />
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10">
+          <TrendingUp className="h-5 w-5 text-emerald-500" />
         </div>
         <div>
           <p className="text-sm text-muted-foreground">Avg Token Premium</p>
           <p
-            className={`text-lg font-semibold font-mono ${avgPremium >= 0 ? "text-emerald-600" : "text-red-500"}`}
+            className={`text-lg font-semibold font-mono ${avgPremium >= 0 ? "text-emerald-500" : "text-red-500"}`}
           >
             {avgPremium >= 0 ? "+" : ""}
             {avgPremium.toFixed(2)}%

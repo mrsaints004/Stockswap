@@ -95,7 +95,7 @@ export function PoolCreator({ selectedToken }: PoolCreatorProps) {
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-xl flex items-center gap-2">
-          <Droplets className="h-5 w-5 text-blue-500" />
+          <Droplets className="h-5 w-5 text-emerald-500" />
           Create DBC Pool
         </CardTitle>
         <p className="text-sm text-muted-foreground">
@@ -104,7 +104,7 @@ export function PoolCreator({ selectedToken }: PoolCreatorProps) {
             href="https://docs.meteora.ag/developer-guides/dbc"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-500 hover:underline"
+            className="text-emerald-500 hover:underline"
           >
             Meteora Dynamic Bonding Curve
           </a>
@@ -226,7 +226,7 @@ export function PoolCreator({ selectedToken }: PoolCreatorProps) {
         <div>
           <label className="text-sm font-medium mb-2 block">Quote Token</label>
           <div className="flex items-center gap-3 rounded-xl border px-4 py-3 bg-muted/30">
-            <div className="h-7 w-7 rounded-full bg-blue-500 flex items-center justify-center text-xs font-bold text-white">
+            <div className="h-7 w-7 rounded-full bg-muted-foreground flex items-center justify-center text-xs font-bold text-white">
               $
             </div>
             <div className="flex-1">
@@ -250,14 +250,14 @@ export function PoolCreator({ selectedToken }: PoolCreatorProps) {
                 onClick={() => setCurvePreset(i)}
                 className={`rounded-xl border p-3 text-left transition-colors ${
                   curvePreset === i
-                    ? "border-blue-500 bg-blue-500/5"
+                    ? "border-emerald-500 bg-emerald-500/5"
                     : "hover:bg-muted/50"
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <span className="font-medium text-sm">{p.name}</span>
                   {curvePreset === i && (
-                    <Badge className="bg-blue-500/10 text-blue-600 text-[10px]">
+                    <Badge className="bg-emerald-500/10 text-emerald-500 text-[10px]">
                       Selected
                     </Badge>
                   )}
@@ -332,7 +332,7 @@ export function PoolCreator({ selectedToken }: PoolCreatorProps) {
         {!connected ? (
           <Button
             onClick={() => openWalletModal(true)}
-            className="w-full h-12 bg-blue-500 hover:bg-blue-600 text-white text-base font-medium"
+            className="w-full h-12 bg-emerald-500 hover:bg-emerald-600 text-white text-base font-medium"
           >
             <Wallet className="mr-2 h-4 w-4" />
             Connect Wallet
@@ -346,7 +346,7 @@ export function PoolCreator({ selectedToken }: PoolCreatorProps) {
               parseFloat(initialLiquidity) < 1 ||
               status === "creating"
             }
-            className="w-full h-12 bg-blue-500 hover:bg-blue-600 text-white text-base font-medium disabled:opacity-50"
+            className="w-full h-12 bg-emerald-500 hover:bg-emerald-600 text-white text-base font-medium disabled:opacity-50"
           >
             {status === "creating" ? (
               <>

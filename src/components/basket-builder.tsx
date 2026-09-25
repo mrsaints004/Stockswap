@@ -263,7 +263,7 @@ export function BasketBuilder() {
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-xl flex items-center gap-2">
-          <ShoppingBasket className="h-5 w-5 text-orange-500" />
+          <ShoppingBasket className="h-5 w-5 text-emerald-500" />
           Index Basket
         </CardTitle>
         <p className="text-sm text-muted-foreground">
@@ -286,7 +286,7 @@ export function BasketBuilder() {
                   className="rounded-xl border p-3 text-left hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex items-center gap-1.5 mb-1">
-                    <Icon className="h-3.5 w-3.5 text-orange-500" />
+                    <Icon className="h-3.5 w-3.5 text-emerald-500" />
                     <span className="font-medium text-sm">{preset.name}</span>
                   </div>
                   <p className="text-[11px] text-muted-foreground">
@@ -458,14 +458,14 @@ export function BasketBuilder() {
         {status === "executing" && (
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-sm">
-              <Loader2 className="h-4 w-4 animate-spin text-orange-500" />
+              <Loader2 className="h-4 w-4 animate-spin text-emerald-500" />
               <span>
                 Executing basket buy... ({results.length}/{allocations.length})
               </span>
             </div>
             <div className="h-2 rounded-full bg-muted overflow-hidden">
               <div
-                className="h-full bg-orange-500 transition-all duration-300 rounded-full"
+                className="h-full bg-emerald-500 transition-all duration-300 rounded-full"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -551,7 +551,7 @@ export function BasketBuilder() {
         {!connected ? (
           <Button
             onClick={() => openWalletModal(true)}
-            className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white text-base font-medium"
+            className="w-full h-12 bg-emerald-500 hover:bg-emerald-600 text-white text-base font-medium"
           >
             <Wallet className="mr-2 h-4 w-4" />
             Connect Wallet
@@ -566,7 +566,7 @@ export function BasketBuilder() {
               parseFloat(totalUsdc) > usdcBalance ||
               status === "executing"
             }
-            className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white text-base font-medium disabled:opacity-50"
+            className="w-full h-12 bg-emerald-500 hover:bg-emerald-600 text-white text-base font-medium disabled:opacity-50"
           >
             {status === "executing" ? (
               <>

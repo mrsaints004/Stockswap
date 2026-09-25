@@ -115,7 +115,7 @@ export default function Home() {
                 href="https://meteora.ag"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-500 hover:underline"
+                className="text-emerald-500 hover:underline"
               >
                 Meteora
               </a>
@@ -133,7 +133,7 @@ export default function Home() {
                 href="https://pyth.network"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-orange-500 hover:underline"
+                className="text-emerald-500 hover:underline"
               >
                 Pyth
               </a>

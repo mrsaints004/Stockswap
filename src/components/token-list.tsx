@@ -91,8 +91,8 @@ export function TokenList({
               </a>
               {!pythLoading && pythPrices.size > 0 && (
                 <span className="inline-flex items-center gap-1 ml-2">
-                  <Radio className="h-3 w-3 text-orange-500 animate-pulse" />
-                  <span className="text-orange-500 text-xs">Pyth Live</span>
+                  <Radio className="h-3 w-3 text-emerald-500 animate-pulse" />
+                  <span className="text-emerald-500 text-xs">Pyth Live</span>
                 </span>
               )}
             </p>
@@ -222,7 +222,7 @@ export function TokenList({
                           <div className="space-y-0.5">
                             <div>{formatPrice(stock.markPrice)}</div>
                             {hasPyth && (
-                              <div className="flex items-center justify-end gap-1 text-orange-500 text-[10px]">
+                              <div className="flex items-center justify-end gap-1 text-emerald-500 text-[10px]">
                                 <Radio className="h-2.5 w-2.5" />
                                 {formatPrice(pythPrice.price)}
                               </div>

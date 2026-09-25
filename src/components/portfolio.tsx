@@ -71,7 +71,7 @@ export function Portfolio() {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl flex items-center gap-2">
-            <PieChart className="h-5 w-5 text-purple-500" />
+            <PieChart className="h-5 w-5 text-emerald-500" />
             Portfolio
           </CardTitle>
           <button
