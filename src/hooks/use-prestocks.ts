@@ -42,8 +42,12 @@ function subscribe(listener: () => void) {
 
 async function fetchStocksData() {
   try {
-    cachedLoading = true;
-    emitChange();
+    // Only show loading skeleton on initial fetch, not on polls
+    const isInitial = cachedStocks.length === 0;
+    if (isInitial) {
+      cachedLoading = true;
+      emitChange();
+    }
     const res = await fetch("/api/prestocks");
     if (!res.ok) throw new Error("Failed to fetch");
     const data = await res.json();
