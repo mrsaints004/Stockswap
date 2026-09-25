@@ -9,6 +9,10 @@ const TOKEN_PROGRAM_ID = new PublicKey(
   "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
 );
 
+const TOKEN_2022_PROGRAM_ID = new PublicKey(
+  "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
+);
+
 export interface TokenBalance {
   mint: string;
   balance: number;
@@ -67,13 +71,30 @@ export function useTokenBalances(mints: string[]) {
     const doFetch = async (): Promise<Map<string, TokenBalance>> => {
       const newBalances = new Map<string, TokenBalance>();
 
-      // Fetch all token accounts in a single RPC call
-      const accounts = await connection.getParsedTokenAccountsByOwner(
-        publicKey,
-        { programId: TOKEN_PROGRAM_ID }
-      );
+      // Fetch token accounts from BOTH legacy Token Program AND Token-2022
+      // PreStocks tokens use Token-2022, USDC uses legacy Token Program
+      const [legacyAccounts, token2022Accounts] = await Promise.all([
+        connection.getParsedTokenAccountsByOwner(publicKey, {
+          programId: TOKEN_PROGRAM_ID,
+        }),
+        connection.getParsedTokenAccountsByOwner(publicKey, {
+          programId: TOKEN_2022_PROGRAM_ID,
+        }),
+      ]);
 
-      for (const { account } of accounts.value) {
+      // Process legacy token accounts (USDC, etc.)
+      for (const { account } of legacyAccounts.value) {
+        const parsed = account.data.parsed.info;
+        const mint = parsed.mint as string;
+        newBalances.set(mint, {
+          mint,
+          balance: parsed.tokenAmount.uiAmount ?? 0,
+          decimals: parsed.tokenAmount.decimals,
+        });
+      }
+
+      // Process Token-2022 accounts (PreStocks tokens)
+      for (const { account } of token2022Accounts.value) {
         const parsed = account.data.parsed.info;
         const mint = parsed.mint as string;
         newBalances.set(mint, {
