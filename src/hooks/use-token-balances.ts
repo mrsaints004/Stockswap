@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useWallet, useConnection } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import { USDC_MINT } from "@/lib/jupiter";
@@ -15,6 +15,13 @@ export interface TokenBalance {
   decimals: number;
 }
 
+// Module-level cache to prevent duplicate fetches across components
+let lastFetchTime = 0;
+let cachedResult: Map<string, TokenBalance> = new Map();
+let fetchPromise: Promise<Map<string, TokenBalance>> | null = null;
+
+const MIN_FETCH_INTERVAL = 15000; // 15 seconds minimum between fetches
+
 export function useTokenBalances(mints: string[]) {
   const { publicKey, connected } = useWallet();
   const { connection } = useConnection();
@@ -23,6 +30,10 @@ export function useTokenBalances(mints: string[]) {
   );
   const [loading, setLoading] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const walletKey = publicKey?.toBase58() ?? "";
+
+  // Stabilize mints reference to prevent effect re-fires
+  const mintsKey = useMemo(() => mints.sort().join(","), [mints]);
 
   const fetchBalances = useCallback(async () => {
     if (!publicKey || !connected) {
@@ -30,29 +41,44 @@ export function useTokenBalances(mints: string[]) {
       return;
     }
 
+    const now = Date.now();
+
+    // If another component just fetched, reuse the cached result
+    if (now - lastFetchTime < MIN_FETCH_INTERVAL && cachedResult.size > 0) {
+      setBalances(cachedResult);
+      return;
+    }
+
+    // If a fetch is already in progress, wait for it
+    if (fetchPromise) {
+      try {
+        const result = await fetchPromise;
+        setBalances(result);
+      } catch {
+        // ignore
+      }
+      return;
+    }
+
     setLoading(true);
-    try {
+
+    const doFetch = async (): Promise<Map<string, TokenBalance>> => {
       const newBalances = new Map<string, TokenBalance>();
 
-      // Fetch all token accounts for the wallet in a single RPC call
+      // Fetch all token accounts in a single RPC call
       const accounts = await connection.getParsedTokenAccountsByOwner(
         publicKey,
         { programId: TOKEN_PROGRAM_ID }
       );
 
-      const mintSet = new Set(mints);
-      mintSet.add(USDC_MINT);
-
       for (const { account } of accounts.value) {
         const parsed = account.data.parsed.info;
         const mint = parsed.mint as string;
-        if (mintSet.has(mint)) {
-          newBalances.set(mint, {
-            mint,
-            balance: parsed.tokenAmount.uiAmount ?? 0,
-            decimals: parsed.tokenAmount.decimals,
-          });
-        }
+        newBalances.set(mint, {
+          mint,
+          balance: parsed.tokenAmount.uiAmount ?? 0,
+          decimals: parsed.tokenAmount.decimals,
+        });
       }
 
       // Ensure USDC entry exists even if zero
@@ -72,16 +98,25 @@ export function useTokenBalances(mints: string[]) {
         decimals: 9,
       });
 
-      setBalances(newBalances);
+      return newBalances;
+    };
+
+    fetchPromise = doFetch();
+
+    try {
+      const result = await fetchPromise;
+      cachedResult = result;
+      lastFetchTime = Date.now();
+      setBalances(result);
     } catch {
       // Silently fail — balances are informational
     } finally {
+      fetchPromise = null;
       setLoading(false);
     }
-  }, [publicKey, connected, connection, mints]);
+  }, [publicKey, connected, connection, walletKey]);
 
   useEffect(() => {
-    // Only start polling when wallet is actually connected
     if (!publicKey || !connected) {
       setBalances(new Map());
       return;
@@ -96,7 +131,7 @@ export function useTokenBalances(mints: string[]) {
         intervalRef.current = null;
       }
     };
-  }, [publicKey, connected, fetchBalances]);
+  }, [walletKey, connected, fetchBalances]);
 
   return { balances, loading, refetch: fetchBalances };
 }
